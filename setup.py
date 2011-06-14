@@ -3,7 +3,7 @@ from distutils.core import setup
 long_desc = open("README", "r").read()
 
 setup(name = "nimp",
-    version = "0.9",
+    version = "0.9.1",
     description = "Nested Imports for Python",
     author = "Tomer Filiba",
     author_email = "tomerfiliba@gmail.com",
