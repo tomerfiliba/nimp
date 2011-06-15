@@ -46,13 +46,13 @@ class _Nimp(object):
         self.cache = {}
     
     @staticmethod
-    def _get_name_prefixes(dotted_name):
+    def _get_name_prefixes(dashed_name):
         i = -1
         while i is not None:
-            i = dotted_name.find(".", i+1)
+            i = max(dashed_name.find("-", i+1), dashed_name.find(".", i+1))
             if i < 0:
                 i = None
-            yield dotted_name[0:i]
+            yield dashed_name[:i]
     
     def _find_all(self, fullname):
         assert fullname not in self.cache
@@ -61,18 +61,17 @@ class _Nimp(object):
                 continue
             for fn in os.listdir(path):
                 fullpath = os.path.join(path, fn)
-                if not os.path.isdir(fullpath) or "." not in fn or not fn.startswith(fullname):
+                if not os.path.isdir(fullpath) or "-" not in fn or not fn.startswith(fullname):
                     continue
-                for pref in self._get_name_prefixes(fn):
-                    fullpath = os.path.join(path, pref)
+                for prefix in self._get_name_prefixes(fn):
+                    fullpath = os.path.join(path, prefix)
+                    modname = prefix.replace("-", ".")
                     if os.path.exists(fullpath):
-                        if pref in self.cache and self.cache[pref] != fullpath:
-                            raise ImportError("%r duplicated: %s and %s" % (pref, fullpath, self.cache[pref]))
-                        self.cache[pref] = fullpath # real
-                    else:
-                        if pref in self.cache and self.cache[pref] is not None:
-                            continue # do not override real
-                        self.cache[pref] = None # namespace only
+                        if modname in self.cache and self.cache[modname] != fullpath:
+                            raise ImportError("%r duplicated: %s and %s" % (modname, fullpath, self.cache[modname]))
+                        self.cache[modname] = fullpath # real
+                    elif modname not in self.cache:
+                        self.cache[modname] = None # namespace only
     
     def clear_cache(self):
         self.cache.clear()
@@ -100,7 +99,7 @@ class _Nimp(object):
                     mod.__file__ = "<namespace module>"
                     mod.__path__ = []
                 else:
-                    info = imp.find_module(fullname, [os.path.dirname(path)])
+                    info = imp.find_module(os.path.basename(path), [os.path.dirname(path)])
                     mod = imp.load_module(fullname, *info)
                     # replace the stub in sys.modules
                     sys.modules[fullname] = mod
@@ -131,5 +130,6 @@ def uninstall():
         return
     sys.meta_path.remove(the_nimp)
     _installed = False
+
 
 
