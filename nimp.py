@@ -102,7 +102,7 @@ def install():
     global _installed
     if _installed:
         return
-    sys.meta_path.append(the_nimphttp://pypi.python.org/pypi/nimp)
+    sys.meta_path.append(the_nimp)
     _installed = True
 
 def uninstall():
