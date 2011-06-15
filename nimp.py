@@ -1,40 +1,16 @@
 """\
-Allows nested imports, a la Java. It installs a harmless meta import-hook that 
+Allows nested imports, a la Java. Nimp installs a harmless meta import-hook that 
 adds support for *nested packages*, i.e., multiple packages that "live" under a 
 common namespace. This is the idiom in Java, where you have packages like 
-``com.foo.bar.spam`` and ``com.foo.bar.eggs``, as well as in Haskell. 
-Nimp basically allows packages to "inject" themselves into shared namespaces.
+``com.foo.bar.spam`` and ``com.foo.bar.eggs``, as well as in Haskell and several 
+other languages. Nimp basically allows packages to "inject" themselves into 
+shared namespaces.
 
-Compatible with Python 2.3 and up and 3.0 and up
-
-Usage::
-
+Usage:
   import nimp
   nimp.install()
 
-Example Layout
---------------
-Assume the following directory structure, say, in your ``site-packages``::
-
-  com.ibm.storage/
-    files...
-  com.ibm.storage.plugins/
-    files...
-  com.ibm.pythontools/
-    files...
-
-Using Nimp, the following imports will work as expected::
-  
-  import com                              # a namespace package (empty)
-  import com.ibm                          # a namespace package (empty)
-  import com.ibm.pythontools              # a real package
-  com.ibm.pythontools.myfunc(1,2,3)
-  
-  # and of course using `from` works too
-  from com.ibm.storage import ScsiDisk    
-  
-  # note how the `plugins` package was "injected" into `storage`
-  from com.ibm.storage.plugins import MySQLPlugin
+See http://pypi.python.org/pypi/nimp for more info.
 """
 import os
 import sys
@@ -45,14 +21,18 @@ class _Nimp(object):
     def __init__(self):
         self.cache = {}
     
-    @staticmethod
-    def _get_name_prefixes(dashed_name):
+    def _get_name_prefixes(self, name):
+        if "-" in name:
+            sep = "-"
+        else:
+            sep = "."
         i = -1
-        while i is not None:
-            i = max(dashed_name.find("-", i+1), dashed_name.find(".", i+1))
+        while True:
+            i = name.find(sep, i+len(sep))
             if i < 0:
-                i = None
-            yield dashed_name[:i]
+                yield name
+                break
+            yield name[:i]
     
     def _find_all(self, fullname):
         assert fullname not in self.cache
@@ -61,7 +41,9 @@ class _Nimp(object):
                 continue
             for fn in os.listdir(path):
                 fullpath = os.path.join(path, fn)
-                if not os.path.isdir(fullpath) or "-" not in fn or not fn.startswith(fullname):
+                if not fn.startswith(fullname) or ("-" not in fn and "." not in fn):
+                    continue
+                if not os.path.isdir(fullpath):
                     continue
                 for prefix in self._get_name_prefixes(fn):
                     fullpath = os.path.join(path, prefix)
@@ -120,7 +102,7 @@ def install():
     global _installed
     if _installed:
         return
-    sys.meta_path.append(the_nimp)
+    sys.meta_path.append(the_nimphttp://pypi.python.org/pypi/nimp)
     _installed = True
 
 def uninstall():
@@ -130,6 +112,7 @@ def uninstall():
         return
     sys.meta_path.remove(the_nimp)
     _installed = False
+
 
 
 

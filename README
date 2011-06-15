@@ -1,36 +1,70 @@
-Allows nested imports, a la Java. It installs a harmless meta import-hook that 
+Nested Imports (Nimp)
+---------------------
+Allows nested imports, a la Java. Nimp installs a harmless meta import-hook that 
 adds support for *nested packages*, i.e., multiple packages that "live" under a 
 common namespace. This is the idiom in Java, where you have packages like 
-``com.foo.bar.spam`` and ``com.foo.bar.eggs``, as well as in Haskell. 
-Nimp basically allows packages to "inject" themselves into shared namespaces.
+``com.foo.bar.spam`` and ``com.foo.bar.eggs``, as well as in Haskell and several 
+other languages. Nimp basically allows packages to "inject" themselves into 
+shared namespaces.
 
-Compatible with Python 2.3 and up and 3.0 and up
+Compatible with Python 2.3-2.7 and 3.0 and up
 
-Usage::
+Usage
+^^^^^
+::
 
   import nimp
   nimp.install()
 
+You can add these two lines to your ``site.py`` script, so you'll get Nimp
+out of the box. 
+
+Benefits
+^^^^^^^^
+* Allows for distributing "plug-in" packages independently: consider a project 
+  like ``twisted``, made of several add-on packages (but without hacking ``distutils`` 
+  too much).
+* A project may depend on package ``X.Y`` without having to depend on ``X``.
+* These nested-packages can be found anywhere on your python path (they don't have
+  to be located in the same directory)
+* A small (less than 100 LoC) standalone module that does all the magic for you --
+  no third-party cooperation required.
+
+.. note::
+  ``distutils`` has problems with directory names that contain dots (as in 
+  ``com.ibm.storage``), so Nimp supports **either dots or hyphens** (e.g., 
+  ``com-ibm-storage``). This allows you to distribute your package nicely, using
+  commonplace distribution mechanisms.
+   
+  **The recommended way is to use hyphens**, but you may continue to use dots,
+  as was the case in previous versions. However, **never mix dots and hyphens** 
+  (e.g., ``com.ibm-storage``) -- it will not work.
+
 Example Layout
 --------------
-Assume the following directory structure, say, in your ``site-packages``::
+Consider the following directory structure, somewhere on your python path 
+(say, ``site-packages``)::
 
-  com.ibm.storage/
-    files...
-  com.ibm.storage.plugins/
-    files...
-  com.ibm.pythontools/
-    files...
-
-Using Nimp, the following imports will work as expected::
+  site-packages/
   
+    com-ibm-storage/
+      files...
+    
+    com-ibm-storage-plugins/
+      files...
+    
+    com-ibm-pythontools/
+      files...
+
+After calling ``nimp.install()``, the following imports will work as expected::
+
   import com                              # a namespace package (empty)
   import com.ibm                          # a namespace package (empty)
   import com.ibm.pythontools              # a real package
   com.ibm.pythontools.myfunc(1,2,3)
   
-  # and of course using `from` works too
+  # and of course `from x import y` works too
   from com.ibm.storage import ScsiDisk    
   
-  # note how the `plugins` package was "injected" into `storage`
+  # note how the `plugins` package is "injected" into `storage`
   from com.ibm.storage.plugins import MySQLPlugin
