@@ -1,7 +1,5 @@
 from distutils.core import setup
 
-long_desc = open("README", "r").read()
-
 setup(name = "nimp",
     version = "0.9.2",
     description = "Nested Imports for Python",
@@ -10,9 +8,9 @@ setup(name = "nimp",
     license = "MIT",
     url = "http://github.com/tomerfiliba/nimp",
     py_modules = ['nimp'],
-    platform = "OS Independent",
-    keywords = "import hook, nested packages, namespace packages, java-like packages",
-    long_description = long_desc,
+    platform = "All",
+    keywords = "import hook nested packages namespace packages java-like packages",
+    long_description = open("README", "r").read(),
     classifiers = [
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
